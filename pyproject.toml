@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "syshawk"
+version = "0.1.0"
+description = "🦅 A cross-platform system diagnostics CLI — snapshot your OS, CPU, memory, disk, network and flame graphs in one command."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Misbah Anjum N", email = "misbah.hana@gmail.com" }]
+keywords = ["system", "diagnostics", "cli", "sysinfo", "flamegraph", "monitoring"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Systems Administration",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "psutil>=5.9",
+    "py-cpuinfo>=9.0",
+    "distro>=1.8; platform_system=='Linux'",
+    "rich>=13.0",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+gpu = ["gputil>=1.4"]
+dev = ["pytest>=7.0", "pytest-cov"]
+
+[project.scripts]
+syshawk = "syshawk.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/misanjumn/syshawk"
+Repository = "https://github.com/misanjumn/syshawk"
+Issues = "https://github.com/misanjumn/syshawk/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["syshawk*"]
+
+[tool.setuptools.package-data]
+"syshawk.report" = ["template.html"]
