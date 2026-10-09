@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦅 SysHawk — System Report</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f17; color: #cdd6f4; font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  header { background: #1e1e2e; border-bottom: 1px solid #313244; padding: 20px 32px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 20px; font-weight: 600; color: #89b4fa; }
+  header span { color: #6c7086; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #1e1e2e; border: 1px solid #313244; border-radius: 10px; padding: 20px; }
+  .card h2 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #89b4fa; margin-bottom: 14px; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #181825; }
+  .row:last-child { border-bottom: none; }
+  .label { color: #6c7086; font-size: 13px; min-width: 120px; }
+  .value { color: #cdd6f4; text-align: right; font-size: 13px; word-break: break-all; }
+  .bar-wrap { margin: 8px 0 4px; }
+  .bar-bg { background: #313244; border-radius: 4px; height: 6px; width: 100%; }
+  .bar-fg { height: 6px; border-radius: 4px; }
+  .bar-green  { background: #a6e3a1; }
+  .bar-yellow { background: #f9e2af; }
+  .bar-red    { background: #f38ba8; }
+  .bar-blue   { background: #89b4fa; }
+  .pct { font-size: 11px; color: #6c7086; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: #6c7086; font-weight: 500; padding: 4px 8px 8px 0; border-bottom: 1px solid #313244; }
+  td { padding: 6px 8px 6px 0; border-bottom: 1px solid #181825; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-up   { background: #1e3a2e; color: #a6e3a1; }
+  .badge-down { background: #3a1e1e; color: #f38ba8; }
+  .full { grid-column: 1 / -1; }
+  .mono { font-family: "SF Mono", "Fira Mono", monospace; font-size: 12px; }
+  .thru { margin-top: 14px; display: flex; gap: 28px; border-top: 1px solid #313244; padding-top: 12px; }
+  .thru-label { color: #6c7086; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  .thru-val { font-size: 17px; font-weight: 600; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🦅 SysHawk</h1>
+  <span>System Report</span>
+  {% if data.os %}
+  <span style="margin-left:auto;">{{ data.os.hostname }}  ·  {{ data.os.os_name }}</span>
+  {% endif %}
+</header>
+
+<div class="grid">
+
+  <!-- OS + Firmware -->
+  {% if data.os %}
+  <div class="card">
+    <h2>Operating System</h2>
+    <div class="row"><span class="label">OS</span>        <span class="value">{{ data.os.os_name }}</span></div>
+    <div class="row"><span class="label">Kernel</span>    <span class="value">{{ data.os.kernel }}</span></div>
+    <div class="row"><span class="label">Hostname</span>  <span class="value">{{ data.os.hostname }}</span></div>
+    <div class="row"><span class="label">Arch</span>      <span class="value">{{ data.os.machine }}</span></div>
+    <div class="row"><span class="label">Uptime</span>    <span class="value">{{ data.os.uptime_human }}</span></div>
+    {% if data.os.python %}
+    <div class="row"><span class="label">Python</span>    <span class="value">{{ data.os.python }}</span></div>
+    {% endif %}
+    {% if data.firmware %}
+      {% if data.firmware.boot_mode %}
+    <div class="row"><span class="label">Boot Mode</span>  <span class="value">{{ data.firmware.boot_mode }}</span></div>
+      {% endif %}
+      {% if data.firmware.secure_boot %}
+    <div class="row"><span class="label">Secure Boot</span> <span class="value">{{ data.firmware.secure_boot }}</span></div>
+      {% endif %}
+      {% if data.firmware.bios_version %}
+    <div class="row"><span class="label">BIOS</span>       <span class="value">{{ data.firmware.bios_vendor or '' }} {{ data.firmware.bios_version }}</span></div>
+      {% endif %}
+      {% if data.firmware.smc_version %}
+    <div class="row"><span class="label">SMC</span>        <span class="value">{{ data.firmware.smc_version }}</span></div>
+      {% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- CPU -->
+  {% if data.cpu %}
+  <div class="card">
+    <h2>CPU</h2>
+    <div class="row"><span class="label">Brand</span>        <span class="value">{{ data.cpu.brand }}</span></div>
+    <div class="row"><span class="label">Architecture</span> <span class="value">{{ data.cpu.arch }}</span></div>
+    <div class="row"><span class="label">Cores</span>        <span class="value">{{ data.cpu.cores_physical }}P / {{ data.cpu.cores_logical }}L</span></div>
+    {% if data.cpu.freq_mhz %}<div class="row"><span class="label">Frequency</span>    <span class="value">{{ data.cpu.freq_mhz }} MHz</span></div>{% endif %}
+    {% if data.cpu.temp_celsius %}<div class="row"><span class="label">Temperature</span>  <span class="value">{{ data.cpu.temp_celsius }}°C</span></div>{% endif %}
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fg {% if data.cpu.usage_percent > 80 %}bar-red{% elif data.cpu.usage_percent > 50 %}bar-yellow{% else %}bar-green{% endif %}" style="width:{{ data.cpu.usage_percent }}%"></div></div>
+      <div class="pct">{{ data.cpu.usage_percent }}% used</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Memory -->
+  {% if data.memory %}
+  <div class="card">
+    <h2>Memory</h2>
+    <div class="row"><span class="label">Total RAM</span>   <span class="value">{{ data.memory.total_gb }} GB</span></div>
+    <div class="row"><span class="label">Used</span>        <span class="value">{{ data.memory.used_gb }} GB</span></div>
+    <div class="row"><span class="label">Available</span>   <span class="value">{{ data.memory.available_gb }} GB</span></div>
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fg {% if data.memory.percent > 80 %}bar-red{% elif data.memory.percent > 60 %}bar-yellow{% else %}bar-green{% endif %}" style="width:{{ data.memory.percent }}%"></div></div>
+      <div class="pct">{{ data.memory.percent }}% RAM used</div>
+    </div>
+    {% if data.memory.swap_total_gb > 0 %}
+    <div class="row" style="margin-top:8px"><span class="label">Swap Total</span>  <span class="value">{{ data.memory.swap_total_gb }} GB</span></div>
+    <div class="row"><span class="label">Swap Used</span>   <span class="value">{{ data.memory.swap_used_gb }} GB</span></div>
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fg {% if data.memory.swap_percent > 80 %}bar-red{% elif data.memory.swap_percent > 60 %}bar-yellow{% else %}bar-blue{% endif %}" style="width:{{ data.memory.swap_percent }}%"></div></div>
+      <div class="pct">{{ data.memory.swap_percent }}% swap used</div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Disk -->
+  {% if data.disk %}
+  <div class="card full">
+    <h2>Disk Mounts</h2>
+    <table>
+      <thead><tr><th>Mount</th><th>FS</th><th>Used / Total</th><th>%</th></tr></thead>
+      <tbody>
+      {% set skip = ['/System/Volumes/VM','/System/Volumes/Preboot','/System/Volumes/Update','/System/Volumes/xarts','/System/Volumes/iSCPreboot','/System/Volumes/Hardware'] %}
+      {% for part in data.disk if part.mountpoint not in skip %}
+      <tr>
+        <td>{{ part.mountpoint }}</td>
+        <td style="color:#6c7086">{{ part.fstype }}</td>
+        <td>{{ part.used_gb }} / {{ part.total_gb }} GB</td>
+        <td>
+          <div class="bar-bg" style="width:64px;display:inline-block;vertical-align:middle">
+            <div class="bar-fg {% if part.percent > 80 %}bar-red{% elif part.percent > 60 %}bar-yellow{% else %}bar-green{% endif %}" style="width:{{ part.percent }}%"></div>
+          </div>
+          <span style="font-size:11px;color:#6c7086;margin-left:5px">{{ part.percent }}%</span>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Block Devices -->
+  {% if data.blocks and data.blocks|length > 0 %}
+  <div class="card full">
+    <h2>Block Devices</h2>
+    <table>
+      <thead><tr><th>Device</th><th>Size</th><th>Type / FS</th><th>Kind</th><th>Mount</th><th>Model</th></tr></thead>
+      <tbody>
+      {% for dev in data.blocks %}
+      <tr>
+        <td class="mono" style="padding-left:{{ dev.depth * 16 }}px">
+          {% if dev.depth > 0 %}└─ {% endif %}{{ dev.name }}
+        </td>
+        <td>{{ dev.size }}</td>
+        <td style="color:#6c7086">{{ dev.fstype or dev.type }}</td>
+        <td><span style="font-size:11px;color:{% if dev.rotational %}#f9e2af{% else %}#89b4fa{% endif %}">{{ 'HDD' if dev.rotational else 'SSD' }}</span></td>
+        <td style="color:#6c7086;font-size:12px">{{ dev.mountpoint or '—' }}</td>
+        <td style="color:#6c7086;font-size:12px">{{ dev.model or '—' }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Network -->
+  {% if data.network %}
+  <div class="card full">
+    <h2>Network</h2>
+    <table>
+      <thead><tr><th>Interface</th><th>IPv4</th><th>Subnet</th><th>MAC</th><th>Gateway</th><th>DNS</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for iface in data.network %}
+      <tr>
+        <td><b>{{ iface.name }}</b></td>
+        <td class="mono">{{ iface.ipv4 or '—' }}</td>
+        <td class="mono" style="color:#6c7086">{{ iface.netmask or '—' }}</td>
+        <td class="mono" style="color:#6c7086;font-size:11px">{{ iface.mac or '—' }}</td>
+        <td class="mono" style="color:#6c7086">{{ iface.gateway or '—' }}</td>
+        <td class="mono" style="color:#6c7086">{{ iface.dns | join(', ') if iface.dns else '—' }}</td>
+        <td><span class="badge {% if iface.is_up %}badge-up{% else %}badge-down{% endif %}">{{ 'up' if iface.is_up else 'down' }}</span></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% if data.throughput %}
+    <div class="thru">
+      <div>
+        <div class="thru-label">Upload</div>
+        <div class="thru-val" style="color:#a6e3a1">↑ {{ data.throughput.sent_mbps }} MB/s</div>
+      </div>
+      <div>
+        <div class="thru-label">Download</div>
+        <div class="thru-val" style="color:#89b4fa">↓ {{ data.throughput.recv_mbps }} MB/s</div>
+      </div>
+      <div>
+        <div class="thru-label">Total Sent</div>
+        <div class="thru-val" style="color:#6c7086;font-size:14px">{{ data.throughput.total_sent_gb }} GB</div>
+      </div>
+      <div>
+        <div class="thru-label">Total Received</div>
+        <div class="thru-val" style="color:#6c7086;font-size:14px">{{ data.throughput.total_recv_gb }} GB</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- GPU -->
+  {% if data.gpu %}
+  {% for g in data.gpu %}
+  <div class="card">
+    <h2>GPU {% if data.gpu|length > 1 %}{{ loop.index }}{% endif %}</h2>
+    <div class="row"><span class="label">Name</span>        <span class="value">{{ g.name }}</span></div>
+    <div class="row"><span class="label">Driver</span>      <span class="value">{{ g.driver }}</span></div>
+    <div class="row"><span class="label">Temperature</span> <span class="value">{{ g.temp_celsius }}°C</span></div>
+    <div class="row"><span class="label">VRAM</span>        <span class="value">{{ g.memory_used_mb }} / {{ g.memory_total_mb }} MB</span></div>
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fg {% if g.load_percent > 80 %}bar-red{% elif g.load_percent > 50 %}bar-yellow{% else %}bar-green{% endif %}" style="width:{{ g.load_percent }}%"></div></div>
+      <div class="pct">{{ g.load_percent }}% GPU load</div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+</div>
+</body>
+</html>
